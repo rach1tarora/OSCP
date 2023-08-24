@@ -2,15 +2,40 @@
 I used the Templater community plugin in obsidian to automatically populate IP,username,password
 Thanks siddicky for this cool idea! 
 
+I do have plans to actively maintain it if people like it
+
+
 
 
 https://www.youtube.com/watch?v=2NLi4wzAvTw&t=634s
 
 
 
+
 Have a look at this video, if youre wondering what im talking about! 
 
-I do have plans to actively maintain it if people like it
+
+Steps to use- 
+
+1-> Download obsidian, click on settings and browse "community plugins"
+2-> Install the Templater plugin by SilentVoid and enable the plugin
+3-> Copy the template and save it
+
+4->Create a new .md file and put in your desired values
+
+---
+LHOST: 1.1.1.1
+RHOST: 0.0.0.0
+USERNAME: username
+PASSWORD: password
+DOMAIN: domain	
+---
+
+5->press alt+e and select your template name
+
+BOOM
+	
+	
 
 ## Shells & stuff
 https://www.revshells.com/
