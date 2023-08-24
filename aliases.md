@@ -1,3 +1,4 @@
+```bash
 alias gopwk="cd /mnt/hgfs/oscp"
 alias godesk='cd /home/username/Desktop'
 alias godown="cd /home/username/Downloads"
@@ -13,3 +14,4 @@ alias ....="cd ../../.."
 alias .....="cd ../../../.."
 alias ctc='xclip -sel clip' # copy to clipboard 
 alias gotools="cd /home/username/Tools"
+```
