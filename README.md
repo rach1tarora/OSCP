@@ -23,6 +23,7 @@ Steps to use-
 
 4->Create a new .md file and put in your desired values
 
+```
 ---
 LHOST: 1.1.1.1
 RHOST: 0.0.0.0
@@ -30,6 +31,7 @@ USERNAME: username
 PASSWORD: password
 DOMAIN: domain	
 ---
+```
 
 5->press alt+e and select your template name
 
