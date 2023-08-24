@@ -4,8 +4,6 @@ Thanks siddicky for this cool idea!
 
 
 
-If youre wondering what im referring to-
-
 https://www.youtube.com/watch?v=2NLi4wzAvTw&t=634s
 
 
