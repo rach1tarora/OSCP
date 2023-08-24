@@ -20,7 +20,6 @@ Steps to use-
 1-> Download obsidian, click on settings and browse "community plugins"
 2-> Install the Templater plugin by SilentVoid and enable the plugin
 3-> Copy the template and save it
-
 4->Create a new .md file and put in your desired values
 
 ```
