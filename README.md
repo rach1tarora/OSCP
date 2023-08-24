@@ -1,5 +1,7 @@
 # OSCP
 I used the Templater community plugin in obsidian to automatically populate IP,username,password
+Thanks siddicky for this cool idea! 
+[https://www.youtube.com/watch?v=2NLi4wzAvTw&t=1200s]
 
 
 ## Shells & stuff
