@@ -22,16 +22,18 @@ Steps to use-
 
 ```
 hyphenhyphenhyphen
+
 LHOST: 1.1.1.1
 RHOST: 0.0.0.0
 USERNAME: username
 PASSWORD: password
 DOMAIN: domain
+
 hyphenhyphenhyphen
 
 ```
 
-![test\(https://cdn.discordapp.com/attachments/1125391842125549601/1149406992843157554/image.png)
+![test](https://cdn.discordapp.com/attachments/1125391842125549601/1149406992843157554/image.png)
 
 5->press alt+e and select your template name
 
