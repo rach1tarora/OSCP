@@ -33,7 +33,7 @@ hyphenhyphenhyphen
 
 ```
 
-![test](https://cdn.discordapp.com/attachments/1125391842125549601/1149406992843157554/image.png)
+![test](https://cdn.discordapp.com/attachments/1125391842125549601/1149407842885980190/image.png)
 
 5->press alt+e and select your template name
 
