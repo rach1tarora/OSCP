@@ -33,7 +33,12 @@ hyphenhyphenhyphen
 
 ```
 
+Always make sure you have source mode enabled, else this wont work!
+![test](https://media.discordapp.net/attachments/1146454908539769002/1149737116167852122/image.png?width=1602&height=720)
+
 ![test](https://cdn.discordapp.com/attachments/1125391842125549601/1149407842885980190/image.png)
+
+
 
 5->press alt+e and select your template name
 
