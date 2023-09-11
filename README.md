@@ -44,7 +44,7 @@ Always make sure you have source mode enabled, else this wont work!
 
 BOOM
 
-
+To change the IP, i would either prefer ctrl + z or just create a new file with the method above ^
 
 ## Shells & stuff
 https://www.revshells.com/
